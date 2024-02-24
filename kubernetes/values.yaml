@@ -1,0 +1,104 @@
+replicaCount: 1
+
+image:
+  repository: nginx
+  tag: latest
+
+imagePullSecrets: []
+#- gitlab-registry
+
+env: []
+#- name: NODE_ENV
+#  value: "{{ .Values.environment }}"
+
+envFrom: []
+#- configMapRef:
+#    name: testConfig
+
+ports:
+- name: http
+  containerPort: 80
+
+service:
+  type: NodePort
+  port: 80
+  containerPort: http
+
+livenessProbe: {}
+#  httpGet:
+#    path: /healthy
+#    port: http
+
+readinessProbe: {}
+#  httpGet:
+#    path: /healthy
+#    port: http
+
+ingress:
+  enabled: false
+#  className: nginx
+#  annotations: {}
+#  hosts:
+#    - host: chart-example.local
+#      paths:
+#        - path: /
+#          pathType: ImplementationSpecific
+#  tls: []
+
+mounts: []
+#- name: pvc-new
+#  type: pvc
+#  storageClass: default
+#  size: 10Gi
+#  mountPath: /mnt/pvc-new
+#- name: pvc-existing
+#  type: pvc
+#  existingPVC: existing-pvc
+#  mountPath: /mnt/pvc-existing
+#- name: configmap-mount
+#  type: configmap
+#  configmapName: test-configmap
+#  mountPath: /mnt/configmap
+#- name: secret-mount
+#  type: secret
+#  secretName: test-secret
+#  mountPath: /mnt/secret
+#- name: vault-mount
+#  type: vault
+#  vaultPath: /secret/infra/vault
+#  mountPath: /mnt/vault
+#  secretStore: vault
+#  refreshInterval: 5m
+
+resources: {}
+
+podAntiAffinity: hard
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podSecurityContext: {}
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+  allowPrivilegeEscalation: false
+
+podAnnotations: {}
+
+nodeSelector: {}
+
+tolerations: []
+
+autoscaling:
+  enabled: false
+#  minReplicas: 1
+#  maxReplicas: 100
+#  targetCPUUtilizationPercentage: 80
+#  targetMemoryUtilizationPercentage: 80

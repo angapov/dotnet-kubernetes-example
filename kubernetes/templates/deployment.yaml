@@ -1,0 +1,124 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "kubernetes.name" . }}
+  labels:
+    {{- include "kubernetes.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "kubernetes.labels" . | nindent 6 }}
+  template:
+    metadata:
+      annotations:
+      {{- with .Values.podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+        helmDate: {{ now | date "2006-01-02T15:04:05" }}
+      labels:
+        {{- include "kubernetes.labels" . | nindent 8 }}
+    spec:
+      {{- if .Values.imagePullSecrets }}
+      imagePullSecrets:
+      {{- range .Values.imagePullSecrets }}
+      - name: {{ . }}
+      {{- end }}
+      {{- end }}
+      serviceAccountName: {{ include "kubernetes.serviceAccountName" . }}
+      {{- with .Values.podSecurityContext }}
+      securityContext:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      containers:
+      - name: {{ include "kubernetes.name" . }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ default "Always" .Values.image.pullPolicy }}
+        env:
+          {{- include "kubernetes.env" . | nindent 10 }}
+        {{- with .Values.envFrom }}
+        envFrom:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.ports }}
+        ports:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.livenessProbe }}
+        livenessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.readinessProbe }}
+        readinessProbe:
+          {{- toYaml . | nindent 10 }}
+        {{- end }}
+        {{- with .Values.resources }}
+        resources:
+        {{- toYaml . | nindent 10 }}
+        {{- end }}
+        securityContext:
+        {{- toYaml .Values.securityContext | nindent 10 }}
+
+      {{- if .Values.mounts }}
+        volumeMounts:
+        {{- range .Values.mounts }}
+        - name: {{ .name }}
+          mountPath: {{ .mountPath }}
+          {{- if has .type (list "vault" "secret" "configmap") }}
+          readOnly: true
+          {{- end }}
+        {{- end }}
+      volumes:
+      {{- range .Values.mounts }}
+      - name: {{ .name }}
+        {{- if has .type (list "secret" "vault") }}
+        secret:
+          secretName: {{ .name }}
+        {{- else if eq "configmap" .type }}
+        configMap:
+          name: {{ .name }}
+        {{- else if eq "pvc" .type }}
+        persistentVolumeClaim:
+          {{- if .existingPVC }}
+          claimName: {{ .existingPVC }}
+          {{- else }}
+          claimName: {{ .name }}
+          {{- end }}
+        {{- end }}
+      {{- end }}
+      {{- end }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      affinity:
+      {{- if eq .Values.podAntiAffinity "hard" }}
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - topologyKey: kubernetes.io/hostname
+            labelSelector:
+              matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                - {{ include "kubernetes.name" . }}
+      {{- else if eq .Values.podAntiAffinity "soft" }}
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchExpressions:
+                - key: app.kubernetes.io/name
+                  operator: In
+                  values:
+                  - {{ include "kubernetes.name" . }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

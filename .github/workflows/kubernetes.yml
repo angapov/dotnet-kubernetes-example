@@ -1,0 +1,35 @@
+name: Deployment to Minikube
+
+on:
+  push:
+    branches:
+    - main
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  docker:
+    runs-on: arc-runner-set
+    permissions:
+      contents: read
+      packages: write
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Deploy
+      uses: deliverybot/helm@v1
+      with:
+        release: ${{ github.event.repository.name }}
+        namespace: default
+        chart: kubernetes
+        values: |
+          image.repository: ${{ env.REGISTRY }}
+          image.tag: ${{ env.IMAGE_NAME }}
+          imagePullSecrets:
+          - ghcr
+          ports:
+          - name: http
+            containerPort: 8080
