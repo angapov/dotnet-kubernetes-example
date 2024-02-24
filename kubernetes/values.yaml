@@ -72,7 +72,7 @@ mounts: []
 
 resources: {}
 
-podAntiAffinity: hard
+podAntiAffinity: soft
 
 serviceAccount:
   create: true

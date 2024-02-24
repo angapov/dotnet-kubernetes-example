@@ -9,6 +9,7 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  NAMESPACE: default
 
 jobs:
   deploy-to-kubernetes:
@@ -23,6 +24,7 @@ jobs:
         git clone https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
         cd ${{ github.event.repository.name }}
         helm upgrade --install ${{ github.event.repository.name }} kubernetes \
+          --namespace ${{ env.NAMESPACE }} \
           --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
           --set image.tag=latest \
           --set imagePullSecrets[0]=ghcr \
