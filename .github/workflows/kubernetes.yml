@@ -11,19 +11,18 @@ env:
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  docker:
+  deploy-to-kubernetes:
     runs-on: arc-runner-set
     container:
       image: alpine/k8s:1.28.7
     permissions:
       contents: read
     steps:
-    - name: Deploy
+    - name: Deploy to Minikube
       run: |
         git clone https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
         cd ${{ github.event.repository.name }}
-        helm install \
-          ${{ github.event.repository.name }} kubernetes \
+        helm upgrade --install ${{ github.event.repository.name }} kubernetes \
           --set image.repository=${{ env.REGISTRY }} \
           --set image.tag=${{ env.IMAGE_NAME }} \
           --set imagePullSecrets[0]=ghcr \
