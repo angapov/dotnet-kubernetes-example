@@ -13,23 +13,17 @@ env:
 jobs:
   docker:
     runs-on: arc-runner-set
-    permissions:
-      contents: read
-      packages: write
+    container:
+      image: alpine/k8s:1.28.7
     steps:
-    - uses: actions/checkout@v4
-
     - name: Deploy
-      uses: deliverybot/helm@v1
-      with:
-        release: ${{ github.event.repository.name }}
-        namespace: default
-        chart: kubernetes
-        values: |
-          image.repository: ${{ env.REGISTRY }}
-          image.tag: ${{ env.IMAGE_NAME }}
-          imagePullSecrets:
-          - ghcr
-          ports:
-          - name: http
-            containerPort: 8080
+      run: |
+        ls -la
+        kubectl cluster-info
+        helm install \
+          ${{ github.event.repository.name }} kubernetes \
+          --set image.repository=${{ env.REGISTRY }} \
+          --set image.tag=${{ env.IMAGE_NAME }} \
+          --set imagePullSecrets=ghcr, \
+          --set ports.name=http \
+          --set ports.containerPort= 8080
