@@ -26,6 +26,6 @@ jobs:
           ${{ github.event.repository.name }} kubernetes \
           --set image.repository=${{ env.REGISTRY }} \
           --set image.tag=${{ env.IMAGE_NAME }} \
-          --set imagePullSecrets=ghcr, \
+          --set imagePullSecrets[0]=ghcr \
           --set ports.name=http \
           --set ports.containerPort=8080
