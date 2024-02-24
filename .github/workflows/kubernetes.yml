@@ -27,5 +27,5 @@ jobs:
           --set image.repository=${{ env.REGISTRY }} \
           --set image.tag=${{ env.IMAGE_NAME }} \
           --set imagePullSecrets[0]=ghcr \
-          --set ports.name=http \
-          --set ports.containerPort=8080
+          --set ports[0].name=http \
+          --set ports[0].containerPort=8080
