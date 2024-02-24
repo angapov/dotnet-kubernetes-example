@@ -23,8 +23,8 @@ jobs:
         git clone https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
         cd ${{ github.event.repository.name }}
         helm upgrade --install ${{ github.event.repository.name }} kubernetes \
-          --set image.repository=${{ env.REGISTRY }} \
-          --set image.tag=${{ env.IMAGE_NAME }} \
+          --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
+          --set image.tag=latest \
           --set imagePullSecrets[0]=ghcr \
           --set ports[0].name=http \
           --set ports[0].containerPort=8080
