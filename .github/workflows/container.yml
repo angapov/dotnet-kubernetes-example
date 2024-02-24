@@ -1,9 +1,10 @@
-name: ci
+name: container-build
 
 on:
   push:
     branches:
     - main
+  workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
