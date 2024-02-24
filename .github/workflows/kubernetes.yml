@@ -18,12 +18,12 @@ jobs:
     steps:
     - name: Deploy
       run: |
-        ls -la
-        kubectl cluster-info
+        git clone https://${GITHUB_ACTOR}:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git
+        cd ${GITHUB_REPOSITORY}
         helm install \
           ${{ github.event.repository.name }} kubernetes \
           --set image.repository=${{ env.REGISTRY }} \
           --set image.tag=${{ env.IMAGE_NAME }} \
           --set imagePullSecrets=ghcr, \
           --set ports.name=http \
-          --set ports.containerPort= 8080
+          --set ports.containerPort=8080
