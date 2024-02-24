@@ -7,9 +7,32 @@ on:
   workflow_dispatch:
 
 env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ env.REGISTRY }}/${{ github.repository }}
   KUBERNETES_NAMESPACE: default
 
 jobs:
+  container-image-build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build and Push the container image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+
   deployment-to-kubernetes:
     runs-on: arc-runner-set
     needs: container-image-build
@@ -24,7 +47,7 @@ jobs:
         cd ${{ github.event.repository.name }}
         helm upgrade --install ${{ github.event.repository.name }} kubernetes \
           --namespace ${{ env.KUBERNETES_NAMESPACE }} \
-          --set image.repository=ghcr.io/${{ github.repository }} \
+          --set image.repository=${{ env.IMAGE_NAME }} \
           --set image.tag=${{ github.ref_name }} \
           --set imagePullSecrets[0]=ghcr \
           --set ports[0].containerPort=8080 \
