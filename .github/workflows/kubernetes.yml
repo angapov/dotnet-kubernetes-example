@@ -12,6 +12,7 @@ env:
 jobs:
   deployment-to-kubernetes:
     runs-on: arc-runner-set
+    needs: container-image-build
     container:
       image: alpine/k8s:1.28.7
     permissions:
