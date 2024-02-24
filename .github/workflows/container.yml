@@ -1,4 +1,4 @@
-name: container-build
+name: Container image build
 
 on:
   push:
@@ -8,10 +8,9 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  docker:
+  container-image-build:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,9 +24,9 @@ jobs:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Build
+      - name: Build and Push the container image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: ${{ env.REGISTRY }}/${{ github.repository }}:${{ github.ref_name }}

@@ -1,4 +1,4 @@
-name: Deployment to Minikube
+name: Deployment to Kubernetes
 
 on:
   push:
@@ -7,26 +7,23 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
-  NAMESPACE: default
+  KUBERNETES_NAMESPACE: default
 
 jobs:
-  deploy-to-kubernetes:
+  deployment-to-kubernetes:
     runs-on: arc-runner-set
     container:
       image: alpine/k8s:1.28.7
     permissions:
       contents: read
     steps:
-    - name: Deploy to Minikube
+    - name: Deployment to Kubernetes
       run: |
         git clone https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
         cd ${{ github.event.repository.name }}
         helm upgrade --install ${{ github.event.repository.name }} kubernetes \
-          --namespace ${{ env.NAMESPACE }} \
-          --set image.repository=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }} \
-          --set image.tag=latest \
+          --namespace ${{ env.KUBERNETES_NAMESPACE }} \
+          --set image.repository=ghcr.io/${{ github.repository }} \
+          --set image.tag=${{ github.ref_name }} \
           --set imagePullSecrets[0]=ghcr \
-          --set ports[0].name=http \
           --set ports[0].containerPort=8080
