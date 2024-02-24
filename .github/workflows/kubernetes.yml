@@ -20,7 +20,7 @@ jobs:
     steps:
     - name: Deploy
       run: |
-        git clone https://${{ github_actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
+        git clone https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
         cd ${{ github.event.repository.name }}
         helm install \
           ${{ github.event.repository.name }} kubernetes \
