@@ -26,4 +26,5 @@ jobs:
           --set image.repository=ghcr.io/${{ github.repository }} \
           --set image.tag=${{ github.ref_name }} \
           --set imagePullSecrets[0]=ghcr \
-          --set ports[0].containerPort=8080
+          --set ports[0].containerPort=8080 \
+          --set service.containerPort=8080
