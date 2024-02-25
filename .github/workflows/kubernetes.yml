@@ -7,6 +7,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository }}
+  IMAGE_TAG: ${{ github.ref_name }}
+  HELM_RELEASE_NAME: ${{ github.event.repository.name }}-${{ github.ref_name }}
   KUBERNETES_NAMESPACE: ${{ github.event.repository.name }}-${{ github.ref_name }}
 
 jobs:
@@ -41,12 +43,13 @@ jobs:
     steps:
     - name: Deployment to Kubernetes
       run: |
-        git clone https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
+        git clone -b ${{ github.ref_name }} https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
         cd ${{ github.event.repository.name }}
-        helm upgrade --install ${{ github.event.repository.name }} kubernetes \
-          --namespace ${{ env.KUBERNETES_NAMESPACE }} \
-          --set image.repository=${{ env.IMAGE_NAME }} \
-          --set image.tag=${{ github.ref_name }} \
+        kubectl create namespace $KUBERNETES_NAMESPACE >/dev/null || true
+        helm upgrade --install $HELM_RELEASE_NAME kubernetes \
+          --namespace $KUBERNETES_NAMESPACE \
+          --set image.repository=$IMAGE_NAME \
+          --set image.tag=$IMAGE_TAG \
           --set imagePullSecrets[0]=ghcr \
           --set ports[0].containerPort=8080 \
           --set service.containerPort=8080
