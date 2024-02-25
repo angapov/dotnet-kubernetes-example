@@ -2,14 +2,12 @@ name: Deployment to Kubernetes
 
 on:
   push:
-    branches:
-    - main
   workflow_dispatch:
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository }}
-  KUBERNETES_NAMESPACE: default
+  KUBERNETES_NAMESPACE: ${{ github.repository }}-{{ github.ref_name }}
 
 jobs:
   container-image-build:
