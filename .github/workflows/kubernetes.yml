@@ -1,37 +1,41 @@
 name: Deployment to Kubernetes
 
-on:
-  push:
-    branches:
-    - main
-  workflow_dispatch:
+on: [push, workflow_dispatch]
 
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ghcr.io/${{ github.repository }}
-  KUBERNETES_NAMESPACE: default
+  IMAGE_TAG: ${{ github.ref_name }}
+  HELM_RELEASE_NAME: ${{ github.event.repository.name }}-${{ github.ref_name }}
+  KUBERNETES_NAMESPACE: ${{ github.event.repository.name }}-${{ github.ref_name }}
 
 jobs:
   container-image-build:
-    runs-on: ubuntu-latest
+    runs-on: arc-runner-set
     permissions:
       contents: read
       packages: write
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+        with:
+          driver: kubernetes
+          driver-opts: |
+            rootless=true
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          password: ${{ github.token }}
       - name: Build and Push the container image
         uses: docker/build-push-action@v5
         with:
           context: .
           push: true
-          tags: ${{ env.IMAGE_NAME }}:${{ github.ref_name }}
+          tags: ${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
   deployment-to-kubernetes:
     runs-on: arc-runner-set
@@ -43,12 +47,17 @@ jobs:
     steps:
     - name: Deployment to Kubernetes
       run: |
-        git clone https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
+        git clone -b ${{ github.ref_name }} https://${{ github.actor }}:${{ github.token }}@github.com/${{ github.repository }}.git
         cd ${{ github.event.repository.name }}
-        helm upgrade --install ${{ github.event.repository.name }} kubernetes \
-          --namespace ${{ env.KUBERNETES_NAMESPACE }} \
-          --set image.repository=${{ env.IMAGE_NAME }} \
-          --set image.tag=${{ github.ref_name }} \
-          --set imagePullSecrets[0]=ghcr \
+        kubectl create namespace $KUBERNETES_NAMESPACE >/dev/null || true
+        kubectl -n $KUBERNETES_NAMESPACE create secret docker-registry ghcr-pull-secret \
+          --docker-server=ghcr.io \
+          --docker-username=${{ github.repository_owner }} \
+          --docker-password=${{ secrets.GHCR_TOKEN }} >/dev/null || true
+        helm upgrade --install $HELM_RELEASE_NAME kubernetes \
+          --namespace $KUBERNETES_NAMESPACE \
+          --set image.repository=$IMAGE_NAME \
+          --set image.tag=$IMAGE_TAG \
+          --set imagePullSecrets[0]=ghcr-pull-secret \
           --set ports[0].containerPort=8080 \
           --set service.containerPort=8080
