@@ -7,7 +7,7 @@ jobs:
   ansible-lint:
     runs-on: arc-runner-set
     container:
-      image: ansible/ansible
+      image: registry.redhat.io/ansible-automation-platform-24/platform-resource-runner-rhel8
     steps:
       - uses: actions/checkout@v4
       - name: Install collections
