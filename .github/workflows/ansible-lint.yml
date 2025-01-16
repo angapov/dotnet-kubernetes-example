@@ -1,0 +1,16 @@
+name: Run ansible-lint
+
+on:
+- workflow_dispatch
+
+jobs:
+  ansible-lint:
+    runs-on: arc-runner-set
+    container:
+      image: ansible/ansible
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install collections
+        run: ansible-galaxy collection install awx.awx
+      - name: Run ansible-lint
+        run: ansible-lint --version
