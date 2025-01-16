@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Build and push container image with Kaniko
-        uses: aevea/action-kaniko
+        uses: aevea/action-kaniko@master
         with:
           image: ${{ env.REGISTRY}}/${{ github.repository }}:${{ github.ref_name }}
           username: ${{ github.actor }}
